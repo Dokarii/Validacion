@@ -3,6 +3,12 @@ import pandas as pd
 import os
 import mysql.connector
 
+config = {
+    'user': '',
+    'password': '',
+    'host': 'localhost',
+    'database': 'bd_tigo'
+}
 
 app = Flask(__name__)
 
