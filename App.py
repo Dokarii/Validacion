@@ -4,7 +4,7 @@ import pymysql
 app = Flask(__name__)
 
 def get_db_connection():
-    """Establishes and returns a database connection."""
+    
     try:
         return pymysql.connect(
             host='localhost',
@@ -16,7 +16,7 @@ def get_db_connection():
         raise Exception(f"Database connection failed: {str(e)}")
 
 def fetch_datos_guardados():
-    """Fetches data from the asignadas table."""
+    
     conn = get_db_connection()
     try:
         with conn.cursor() as cursor:
@@ -29,20 +29,15 @@ def fetch_datos_guardados():
         conn.close()
 
 def inventario(datos_guardados, nombre_equipo):
-    """Returns a string describing the software installed on the given machine."""
+    
     try:
-        # Filter the list of dictionaries for the given machine
         softwares = [item['Nombre_Software'] for item in datos_guardados if item['Maquina'] == nombre_equipo]
 
         if not softwares:
             return "El equipo cuenta con software básico"
-        
-        # Get unique software names and sort them
         softwares_unicos = sorted(list(set(softwares)))
         if len(softwares_unicos) == 1:
             return f"El equipo cuenta con software básico y a parte con {softwares_unicos[0]}"
-        
-        # Join multiple software names with commas and 'y' for the last item
         lista_softwares = ", ".join(softwares_unicos[:-1]) + " y " + softwares_unicos[-1]
         return f"El equipo cuenta con software básico y a parte con {lista_softwares}"
     
