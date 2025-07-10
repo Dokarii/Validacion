@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Consulta de Software en Equipos</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/style.css') }}"
+    />
+  </head>
+  <body>
+    <div class="header">
+      <div class="logo">
+        <img
+          src="{{ url_for('static', filename='img/Tigo-Colombia.png') }}"
+          alt="Logo Tigo"
+        />
+      </div>
+      <h1>Validación de licencias</h1>
+    </div>
+
+    <form method="POST">
+      <label for="equipo">Nombre del equipo:</label>
+      <input type="text" id="equipo" name="equipo" required />
+      <button type="submit">Consultar</button>
+    </form>
+
+    {% if resultado is not none %}
+    <div class="resultado">
+      <p id="resultadoTexto">{{ resultado }}</p>
+      <button type="button" onclick="copiarAlPortapapeles()">Copiar</button>
+    </div>
+    {% endif %}
+  </body>
+  <script>
+    function copiarAlPortapapeles() {
+      const texto = document.getElementById("resultadoTexto").innerText;
+      navigator.clipboard
+        .writeText(texto)
+    }
+  </script>
+</html>
