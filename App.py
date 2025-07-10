@@ -1,38 +1,53 @@
-from flask import Flask, render_template, request, url_for
-import pandas as pd
-import os
-import mysql.connector
-
-config = {
-    'user': '',
-    'password': '',
-    'host': 'localhost',
-    'database': 'bd_tigo'
-}
+from flask import Flask, render_template, request
+import pymysql
 
 app = Flask(__name__)
 
-def inventario(archivo_excel, nombre_equipo):
+def get_db_connection():
+    """Establishes and returns a database connection."""
     try:
-        df = pd.read_excel(archivo_excel)
-        softwares = df[df['Equipo'] == nombre_equipo]['Software instakados'].tolist()
+        return pymysql.connect(
+            host='localhost',
+            user='root',
+            password='',
+            database='bd_tigo'
+        )
+    except pymysql.MySQLError as e:
+        raise Exception(f"Database connection failed: {str(e)}")
+
+def fetch_datos_guardados():
+    """Fetches data from the asignadas table."""
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT Nombre_Software, Maquina FROM asignadas")
+            resultados = cursor.fetchall()
+        return [{'Nombre_Software': row[0], 'Maquina': row[1]} for row in resultados]
+    except pymysql.MySQLError as e:
+        raise Exception(f"Database query failed: {str(e)}")
+    finally:
+        conn.close()
+
+def inventario(datos_guardados, nombre_equipo):
+    """Returns a string describing the software installed on the given machine."""
+    try:
+        # Filter the list of dictionaries for the given machine
+        softwares = [item['Nombre_Software'] for item in datos_guardados if item['Maquina'] == nombre_equipo]
 
         if not softwares:
-            return f"El equipo cuenta con software básico"
-            
-        else:
-            softwares_unicos = sorted(list(set(softwares)))
-            if len(softwares_unicos) == 1:
-                return f"El equipo cuenta con software básico y a parte con {softwares_unicos[0]}"
-                
-            else:
-                lista_softwares = ", ".join(softwares_unicos[:-1]) + " y " + softwares_unicos[-1]
-                return f"El equipo cuenta con software básico y a parte con {lista_softwares}"
-            
-    except FileNotFoundError:
-        return "Error: Archivo Excel no encontrado"
+            return "El equipo cuenta con software básico"
+        
+        # Get unique software names and sort them
+        softwares_unicos = sorted(list(set(softwares)))
+        if len(softwares_unicos) == 1:
+            return f"El equipo cuenta con software básico y a parte con {softwares_unicos[0]}"
+        
+        # Join multiple software names with commas and 'y' for the last item
+        lista_softwares = ", ".join(softwares_unicos[:-1]) + " y " + softwares_unicos[-1]
+        return f"El equipo cuenta con software básico y a parte con {lista_softwares}"
+    
     except Exception as e:
-        return f"Error ine8sperado: {str(e)}"
+        return f"Error inesperado: {str(e)}"
 
 @app.route("/", methods=["GET", "POST"])
 def index():
@@ -40,8 +55,11 @@ def index():
     if request.method == "POST":
         equipo = request.form.get("equipo", "").strip()
         if equipo:
-            excel_path = os.path.join(os.path.dirname(__file__), "inventario.xlsx")
-            resultado = inventario(excel_path, equipo)
+            try:
+                datos_guardados = fetch_datos_guardados()
+                resultado = inventario(datos_guardados, equipo)
+            except Exception as e:
+                resultado = f"Error: {str(e)}"
     return render_template("index.html", resultado=resultado)
 
 if __name__ == "__main__":
